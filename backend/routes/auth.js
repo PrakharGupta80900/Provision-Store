@@ -18,7 +18,9 @@ const emailConfigured =
 
 const transporter = emailConfigured
     ? nodemailer.createTransport({
-        service: "gmail",
+        host: "smtp.gmail.com",
+        port: 587,
+        secure: false, // use STARTTLS
         auth: { user: EMAIL_USER, pass: EMAIL_PASS },
     })
     : null;
