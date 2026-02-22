@@ -3,7 +3,12 @@ const mongoose = require("mongoose");
 const OrderSchema = new mongoose.Schema({
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     customerName: String,
+    email: String,
     items: Array,
+    subtotal: Number,
+    tax: Number,
+    deliveryCharge: Number,
+    deliverySlot: String,
     total: Number,
     address: String,
     phone: String,

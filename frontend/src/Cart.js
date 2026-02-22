@@ -19,7 +19,7 @@ const Cart = () => {
         );
     }
 
-    const deliveryFee = total >= 200 ? 0 : 25;
+    const deliveryFee = total >= 500 ? 0 : 15;
     const finalTotal = total + deliveryFee;
 
     return (
@@ -98,7 +98,7 @@ const Cart = () => {
                         </div>
                         {deliveryFee === 0 && (
                             <div style={{ fontSize: 11, color: '#0c831f', fontWeight: 600, marginTop: -6, marginBottom: 6 }}>
-                                🎉 Free delivery on orders ₹200+
+                                🎉 Free delivery on orders ₹500+
                             </div>
                         )}
 

@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const Order = require("../models/Order");
+const User = require("../models/User");
 const Counter = require("../models/Counter");
 const auth = require("../middleware/auth");
 const nodemailer = require("nodemailer");
@@ -118,9 +119,25 @@ function generateOrderBillHtml(order) {
                 </table>
 
                 <div class="total-section">
-                    <p style="margin: 0; color: #777;">Amount Payable</p>
-                    <h2 class="grand-total">₹${order.total.toFixed(2)}</h2>
-                    <p style="margin: 5px 0; font-size: 11px; color: #999;">Prices are inclusive of all taxes.</p>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; color: #666;">
+                        <span>Item Subtotal</span>
+                        <span>₹${(order.subtotal || order.total).toFixed(2)}</span>
+                    </div>
+                    ${order.tax > 0 ? `
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; color: #666;">
+                            <span>Service/Handling Fee</span>
+                            <span>₹${order.tax.toFixed(2)}</span>
+                        </div>
+                    ` : ''}
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; color: #666;">
+                        <span>Delivery Fee ${order.deliverySlot ? `(${order.deliverySlot.replace('_', ' ')})` : ''}</span>
+                        <span>₹${(order.deliveryCharge || 0).toFixed(2)}</span>
+                    </div>
+                    <div style="border-top: 1px solid #eee; padding-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: bold; font-size: 16px;">Grand Total</span>
+                        <h2 class="grand-total" style="margin: 0;">₹${order.total.toFixed(2)}</h2>
+                    </div>
+                    <p style="margin: 10px 0 0; font-size: 11px; color: #999; text-align: right;">Prices include all applicable fees.</p>
                 </div>
 
                 <div class="footer">
@@ -163,6 +180,11 @@ async function notifyAdmin(order) {
                     </tr>
                 </table>
                 <div style="background:#f8f8f8;border-radius:8px;padding:16px;">
+                    <p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#555;">DELIVERY SLOT</p>
+                    <p style="margin:0 0 12px;font-size:16px;font-weight:700;color:#0c831f;">
+                        ${order.deliverySlot ? order.deliverySlot.replace('_', ' ').toUpperCase() : 'TODAY'}
+                    </p>
+                    
                     <p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#555;">DELIVERY TO</p>
                     <p style="margin:0;font-size:14px;color:#1d1d1d;line-height:1.6;">
                         <strong>${order.customerName || 'Customer'}</strong><br/>
@@ -178,14 +200,53 @@ async function notifyAdmin(order) {
     }
 }
 
+/* ── Customer delivery notification ── */
+async function notifyDelivery(order) {
+    if (!order.email) return;
+
+    const html = `
+        <div style="font-family:Inter,Arial,sans-serif;max-width:560px;margin:auto;border:1px solid #e0e0e0;border-radius:12px;overflow:hidden;">
+            <div style="background:#0c831f;padding:20px 24px;text-align:center;">
+                <h1 style="color:#fff;margin:0;font-size:24px;">✅ Gupta Kirana Store</h1>
+            </div>
+            <div style="padding:24px;text-align:center;">
+                <h2 style="color:#1d1d1d;margin-top:0;">Order Delivered!</h2>
+                <p style="color:#555;font-size:16px;line-height:1.6;">Hi <strong>${order.customerName}</strong>, your order <strong>${order.orderId}</strong> has been successfully delivered. We hope you enjoy your purchase!</p>
+                <div style="background:#f9f9f9;border-radius:8px;padding:20px;margin:24px 0;text-align:left;">
+                    <h3 style="margin-top:0;font-size:14px;color:#999;text-transform:uppercase;">Order Details</h3>
+                    <p style="margin:5px 0;"><strong>ID:</strong> ${order.orderId}</p>
+                    <p style="margin:5px 0;"><strong>Total:</strong> ₹${order.total}</p>
+                </div>
+                <p style="color:#888;font-size:14px;">Thank you for choosing Gupta Kirana Store. We look forward to serving you again!</p>
+            </div>
+            <div style="background:#f4f4f4;padding:15px;text-align:center;font-size:12px;color:#999;">
+                &copy; ${new Date().getFullYear()} Gupta Kirana Store. Your neighborhood provision store.
+            </div>
+        </div>`;
+
+    if (emailConfigured) {
+        await sendMail(order.email, `✅ Order Delivered — Gupta Kirana Store (${order.orderId})`, html);
+    }
+}
+
 
 
 /* ================================================================
    GET ALL ORDERS (Admin)
 ================================================================ */
 router.get("/", auth, async (req, res) => {
+    if (!req.user.isAdmin) return res.status(403).json({ msg: "Access denied" });
     try {
-        const orders = await Order.find().sort({ date: -1 });
+        const orders = await Order.aggregate([
+            {
+                $addFields: {
+                    priority: {
+                        $cond: { if: { $eq: ["$status", "pending"] }, then: 0, else: 1 }
+                    }
+                }
+            },
+            { $sort: { priority: 1, date: -1 } }
+        ]);
         res.json(orders);
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -220,7 +281,7 @@ router.post("/", auth, async (req, res) => {
             } catch (e) { }
         }
 
-        const { items, total, customerName, address, phone } = req.body;
+        const { items, subtotal, tax, deliveryCharge, deliverySlot, total, customerName, email, address, phone } = req.body;
 
         // Date-scoped Sequential Order ID (GKS-YYMMDD-XXX)
         const now = new Date();
@@ -231,8 +292,13 @@ router.post("/", auth, async (req, res) => {
 
         const o = new Order({
             items,
+            subtotal,
+            tax,
+            deliveryCharge,
+            deliverySlot,
             total,
             customerName,
+            email,
             address,
             phone,
             user: userId,
@@ -277,8 +343,25 @@ router.put("/:id/status", auth, async (req, res) => {
         if (status === 'delivered' && order.status !== 'delivered') order.deliveredAt = now;
         if (status === 'cancelled' && order.status !== 'cancelled') order.cancelledAt = now;
 
+        const oldStatus = order.status;
         order.status = status;
         await order.save();
+
+        // Notify customer on delivery (non-blocking)
+        if (status === 'delivered' && oldStatus !== 'delivered') {
+            notifyDelivery(order).catch(err => console.error("Delivery notification error:", err.message));
+
+            // Add 1% cashback to user wallet
+            if (order.user) {
+                const cashback = Math.floor(order.total * 0.01);
+                if (cashback > 0) {
+                    User.findByIdAndUpdate(order.user, { $inc: { wallet: cashback } })
+                        .then(() => console.log(`Added ₹${cashback} cashback to user ${order.user}`))
+                        .catch(err => console.error("Cashback update error:", err.message));
+                }
+            }
+        }
+
         res.json(order);
     } catch (err) {
         res.status(500).json({ message: err.message });

@@ -11,14 +11,18 @@ const Checkout = () => {
 
     const [savedAddress, setSavedAddress] = useState(null); // profile data
     const [mode, setMode] = useState('loading'); // 'loading' | 'confirm' | 'new' | 'guest' | 'bill'
-    const [newAddress, setNewAddress] = useState({ name: '', address: '', phone: '' });
+    const [newAddress, setNewAddress] = useState({ name: '', email: '', address: '', phone: '' });
+    const [deliverySlot, setDeliverySlot] = useState('today'); // 'within_1hr' | 'today' | 'tomorrow'
     const [confirmedAddress, setConfirmedAddress] = useState(null);
     const [saveToProfile, setSaveToProfile] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
 
-    const deliveryFee = total >= 200 ? 0 : 25;
-    const finalTotal = total + deliveryFee;
+    const tax = total * 0.05;
+    const baseDelivery = total >= 500 ? 0 : 15;
+    const slotFee = deliverySlot === 'within_1hr' ? 20 : (deliverySlot === 'today' ? 10 : 0);
+    const deliveryFee = baseDelivery + slotFee;
+    const finalTotal = total + tax + deliveryFee;
 
     /* ── Load profile ── */
     useEffect(() => {
@@ -32,6 +36,7 @@ const Checkout = () => {
                 setSavedAddress(data);
                 setNewAddress({
                     name: data?.name || '',
+                    email: data?.email || '',
                     address: '',
                     phone: data?.phone || ''
                 });
@@ -48,6 +53,7 @@ const Checkout = () => {
         e.preventDefault();
         setConfirmedAddress({
             customerName: savedAddress.name,
+            email: savedAddress.email,
             address: savedAddress.address,
             phone: savedAddress.phone
         });
@@ -62,6 +68,7 @@ const Checkout = () => {
         // but we'll flag it here for the final step)
         setConfirmedAddress({
             customerName: newAddress.name,
+            email: newAddress.email,
             address: newAddress.address,
             phone: newAddress.phone,
             shouldSave: saveToProfile && user
@@ -85,9 +92,14 @@ const Checkout = () => {
 
             const orderData = {
                 customerName: confirmedAddress.customerName,
+                email: confirmedAddress.email,
                 address: confirmedAddress.address,
                 phone: confirmedAddress.phone,
                 items: cart,
+                subtotal: total,
+                tax: tax,
+                deliveryCharge: deliveryFee,
+                deliverySlot: deliverySlot,
                 total: finalTotal,
             };
             const result = await placeOrder(orderData);
@@ -95,8 +107,8 @@ const Checkout = () => {
                 clearCart();
                 navigate('/shop');
                 setTimeout(() => alert(`🎉 Order placed! Order ID: ${result.orderId}. Your items are on the way.`), 100);
-            } else if (result) {
-                setError('Failed to place order. Please try again.');
+            } else {
+                setError('Failed to place order. Please try again. Make sure you are logged in.');
             }
         } catch (err) {
             setError('Something went wrong. Please try again.');
@@ -105,7 +117,38 @@ const Checkout = () => {
         }
     };
 
-    /* ── Order summary ── */
+    /* ── Delivery Slot Selector ── */
+    const DeliverySlotSelector = () => (
+        <div className="bk-slot-selector">
+            <div className="bk-addr-section-label">🕒 Choose Delivery Slot</div>
+            <div className="bk-slots-grid">
+                <div
+                    className={`bk-slot-card ${deliverySlot === 'within_1hr' ? 'active' : ''}`}
+                    onClick={() => setDeliverySlot('within_1hr')}
+                >
+                    <div className="bk-slot-time">⚡ Within 1 hr</div>
+                    <div className="bk-slot-fee">+ ₹20 charge</div>
+                </div>
+                <div
+                    className={`bk-slot-card ${deliverySlot === 'today' ? 'active' : ''}`}
+                    onClick={() => setDeliverySlot('today')}
+                >
+                    <div className="bk-slot-time">📅 Today</div>
+                    <div className="bk-slot-fee">+ ₹10 charge</div>
+                </div>
+                <div
+                    className={`bk-slot-card ${deliverySlot === 'tomorrow' ? 'active' : ''}`}
+                    onClick={() => setDeliverySlot('tomorrow')}
+                >
+                    <div className="bk-slot-time">🌅 Tomorrow</div>
+                    <div className="bk-slot-fee">FREE</div>
+                </div>
+            </div>
+            <p style={{ fontSize: 12, color: '#888', marginTop: 8 }}>
+                * Base delivery of ₹15 applies for orders below ₹500.
+            </p>
+        </div>
+    );
     const OrderSummary = () => (
         <div className="bk-order-summary">
             <h4>🧾 Order Summary</h4>
@@ -117,6 +160,14 @@ const Checkout = () => {
                     </li>
                 ))}
                 <li>
+                    <span>Subtotal</span>
+                    <span>₹{total.toFixed(0)}</span>
+                </li>
+                <li>
+                    <span>Service/Handling Fee</span>
+                    <span>₹{tax.toFixed(0)}</span>
+                </li>
+                <li>
                     <span>Delivery charge</span>
                     <span style={{ color: deliveryFee === 0 ? '#0c831f' : undefined }}>
                         {deliveryFee === 0 ? 'FREE' : `₹${deliveryFee}`}
@@ -124,7 +175,7 @@ const Checkout = () => {
                 </li>
             </ul>
             <div className="bk-order-total-row">
-                <span>Total</span>
+                <span>Total Amount</span>
                 <span>₹{finalTotal.toFixed(0)}</span>
             </div>
         </div>
@@ -171,15 +222,19 @@ const Checkout = () => {
                         </tr>
                     ))}
                     <tr className="bk-bill-summary-row">
-                        <td colspan="3">Subtotal</td>
+                        <td colSpan="3">Subtotal</td>
                         <td>₹{total.toFixed(0)}</td>
                     </tr>
                     <tr className="bk-bill-summary-row">
-                        <td colspan="3">Delivery Fee</td>
+                        <td colSpan="3">Service/Handling Fee</td>
+                        <td>₹{tax.toFixed(0)}</td>
+                    </tr>
+                    <tr className="bk-bill-summary-row">
+                        <td colSpan="3">Delivery Fee ({deliverySlot.replace('_', ' ')})</td>
                         <td>{deliveryFee === 0 ? 'FREE' : `₹${deliveryFee}`}</td>
                     </tr>
                     <tr className="bk-bill-grand-total">
-                        <td colspan="3">Grand Total</td>
+                        <td colSpan="3">Grand Total</td>
                         <td>₹{finalTotal.toFixed(0)}</td>
                     </tr>
                 </tbody>
@@ -256,6 +311,7 @@ const Checkout = () => {
                                 + Use a different address
                             </button>
 
+                            <DeliverySlotSelector />
                             <OrderSummary />
 
                             <button
@@ -298,6 +354,15 @@ const Checkout = () => {
                             </div>
 
                             <div className="bk-form-field">
+                                <label className="bk-form-label">Email Address</label>
+                                <input
+                                    type="email" name="email" className="bk-form-input"
+                                    value={newAddress.email} onChange={handleNewChange}
+                                    placeholder="yourname@example.com" required
+                                />
+                            </div>
+
+                            <div className="bk-form-field">
                                 <label className="bk-form-label">Delivery Address</label>
                                 <textarea
                                     name="address" className="bk-form-input"
@@ -328,6 +393,7 @@ const Checkout = () => {
                                 </label>
                             )}
 
+                            <DeliverySlotSelector />
                             <OrderSummary />
 
                             <button

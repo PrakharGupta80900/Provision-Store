@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
             localStorage.setItem('user', JSON.stringify(res.data.user));
             setUser(res.data.user);
             axios.defaults.headers.common['x-auth-token'] = res.data.token;
-            return { success: true };
+            return { success: true, isAdmin: res.data.user.isAdmin };
         } catch (err) {
             console.error(err);
             const msg = err.response?.data?.msg || "Login failed. Server might be unreachable.";

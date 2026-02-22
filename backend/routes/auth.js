@@ -146,7 +146,7 @@ router.post("/register", async (req, res) => {
         const token = jwt.sign(
             { id: newUser._id, isAdmin: newUser.isAdmin },
             process.env.JWT_SECRET,
-            { expiresIn: "1h" }
+            { expiresIn: "7d" }
         );
         res.status(201).json({
             token,
@@ -167,7 +167,7 @@ router.post("/login", async (req, res) => {
 
         // Admin check
         if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
-            const token = jwt.sign({ id: "admin", isAdmin: true }, process.env.JWT_SECRET, { expiresIn: "1h" });
+            const token = jwt.sign({ id: "admin", isAdmin: true }, process.env.JWT_SECRET, { expiresIn: "7d" });
             return res.json({ token, user: { id: "admin", name: "Admin", email, isAdmin: true } });
         }
 
@@ -177,7 +177,7 @@ router.post("/login", async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ msg: "Invalid credentials" });
 
-        const token = jwt.sign({ id: user._id, isAdmin: user.isAdmin }, process.env.JWT_SECRET, { expiresIn: "1h" });
+        const token = jwt.sign({ id: user._id, isAdmin: user.isAdmin }, process.env.JWT_SECRET, { expiresIn: "7d" });
         res.json({ token, user: { id: user._id, name: user.name, email: user.email, isAdmin: user.isAdmin } });
     } catch (err) {
         res.status(500).json({ error: err.message });

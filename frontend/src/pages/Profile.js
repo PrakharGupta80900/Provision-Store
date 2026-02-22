@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { fetchMyOrders, fetchUserProfile, updateUserProfile } from '../api';
+import { fetchUserProfile, updateUserProfile } from '../api';
 import AuthContext from '../AuthContext';
+import { useTheme } from '../ThemeContext';
 import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
-    const { user } = useContext(AuthContext);
-    const [orders, setOrders] = useState([]);
-    const [profile, setProfile] = useState({ name: '', address: '', phone: '' });
+    const { user, logout } = useContext(AuthContext);
+    const { theme, toggleTheme } = useTheme();
+    const [profile, setProfile] = useState({ name: '', address: '', phone: '', wallet: 0 });
     const [isEditing, setIsEditing] = useState(false);
     const navigate = useNavigate();
 
@@ -15,9 +16,13 @@ const Profile = () => {
             navigate('/login');
             return;
         }
-        fetchMyOrders().then(setOrders);
         fetchUserProfile().then(data => {
-            if (data) setProfile({ name: data.name, address: data.address || '', phone: data.phone || '' });
+            if (data) setProfile({
+                name: data.name,
+                address: data.address || '',
+                phone: data.phone || '',
+                wallet: data.wallet || 0
+            });
         });
     }, [user, navigate]);
 
@@ -25,77 +30,134 @@ const Profile = () => {
         e.preventDefault();
         const updated = await updateUserProfile(profile);
         if (updated) {
-            alert("Profile updated successfully!");
             setIsEditing(false);
-        } else {
-            alert("Failed to update profile.");
+            alert("Profile updated successfully! ✨");
         }
     };
 
+    const initial = profile.name?.charAt(0) || user?.email?.charAt(0) || '?';
+
     return (
-        <div className="container mt-4">
-            <div className="row">
-                <div className="col-md-4">
-                    <div className="card">
-                        <div className="card-header">User Profile</div>
-                        <div className="card-body">
-                            {isEditing ? (
-                                <form onSubmit={handleUpdate}>
-                                    <div className="mb-3">
-                                        <label>Name</label>
-                                        <input type="text" className="form-control" value={profile.name} onChange={e => setProfile({ ...profile, name: e.target.value })} />
-                                    </div>
-                                    <div className="mb-3">
-                                        <label>Address</label>
-                                        <textarea className="form-control" value={profile.address} onChange={e => setProfile({ ...profile, address: e.target.value })} />
-                                    </div>
-                                    <div className="mb-3">
-                                        <label>Phone</label>
-                                        <input type="text" className="form-control" value={profile.phone} onChange={e => setProfile({ ...profile, phone: e.target.value })} />
-                                    </div>
-                                    <button type="submit" className="btn btn-success me-2">Save</button>
-                                    <button type="button" className="btn btn-secondary" onClick={() => setIsEditing(false)}>Cancel</button>
-                                </form>
-                            ) : (
-                                <div>
-                                    <p><strong>Name:</strong> {profile.name}</p>
-                                    <p><strong>Email:</strong> {user?.email}</p>
-                                    <p><strong>Address:</strong> {profile.address || 'Not set'}</p>
-                                    <p><strong>Phone:</strong> {profile.phone || 'Not set'}</p>
-                                    <button className="btn btn-primary" onClick={() => setIsEditing(true)}>Edit Profile</button>
-                                </div>
-                            )}
+        <div className="bk-z-container">
+            {/* --- Header --- */}
+            <div className="bk-z-header">
+                <button className="bk-z-back-btn" onClick={() => navigate('/shop')}>←</button>
+
+                <div className="bk-z-profile-card">
+                    <div className="bk-z-avatar">{initial}</div>
+                    <div className="bk-z-user-info">
+                        <h2>{profile.name || 'valued user'}</h2>
+                        <div className="bk-z-edit-profile" onClick={() => setIsEditing(!isEditing)}>
+                            {isEditing ? 'Cancel editing' : 'Edit profile'}
                         </div>
                     </div>
                 </div>
-                <div className="col-md-8">
-                    <h3>Order History</h3>
-                    {orders.length === 0 ? <p>No orders found.</p> : (
-                        <div className="list-group">
-                            {orders.map(order => (
-                                <div key={order._id} className="list-group-item">
-                                    <div className="d-flex w-100 justify-content-between">
-                                        <h5 className="mb-1">Order #{order._id.slice(-6)}</h5>
-                                        <div>
-                                            <span className={`badge me-2 ${order.status === 'Completed' ? 'bg-success' : order.status === 'Cancelled' ? 'bg-danger' : 'bg-warning'}`}>
-                                                {order.status || 'Pending'}
-                                            </span>
-                                            <small>{new Date(order.date).toLocaleDateString()}</small>
-                                        </div>
-                                    </div>
-                                    <p className="mb-1">Total: ${order.total}</p>
-                                    <small>{order.items.length} items</small>
-                                    <ul>
-                                        {order.items.map((item, idx) => (
-                                            <li key={idx}>{item.name} x {item.quantity}</li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            ))}
+
+                {!isEditing && (
+                    <div className="bk-z-membership-bar">
+                        <div className="bk-z-membership-content">
+                            <div className="bk-z-membership-icon">👑</div>
+                            Renew your Gold Membership
                         </div>
-                    )}
-                </div>
+                        <span style={{ fontSize: '18px' }}>›</span>
+                    </div>
+                )}
             </div>
+
+            {isEditing ? (
+                /* --- Edit Form --- */
+                <form onSubmit={handleUpdate} className="bk-z-edit-form">
+                    <div className="bk-z-input-wrapper">
+                        <label className="bk-z-label">Full Name</label>
+                        <input
+                            type="text"
+                            className="bk-z-input"
+                            value={profile.name}
+                            onChange={e => setProfile({ ...profile, name: e.target.value })}
+                            placeholder="Your Name"
+                            required
+                        />
+                    </div>
+                    <div className="bk-z-input-wrapper">
+                        <label className="bk-z-label">Mobile Number</label>
+                        <input
+                            type="text"
+                            className="bk-z-input"
+                            value={profile.phone}
+                            onChange={e => setProfile({ ...profile, phone: e.target.value })}
+                            placeholder="10-digit mobile number"
+                        />
+                    </div>
+                    <div className="bk-z-input-wrapper">
+                        <label className="bk-z-label">Address</label>
+                        <textarea
+                            className="bk-z-input"
+                            rows="3"
+                            value={profile.address}
+                            onChange={e => setProfile({ ...profile, address: e.target.value })}
+                            placeholder="Flat No, House Name, Street"
+                        />
+                    </div>
+
+                    <div className="bk-z-btn-group">
+                        <button type="button" className="bk-z-btn-secondary" onClick={() => setIsEditing(false)}>Cancel</button>
+                        <button type="submit" className="bk-z-btn-primary">Update Profile</button>
+                    </div>
+                </form>
+            ) : (
+                /* --- Profile View --- */
+                <>
+                    <div className="bk-z-quick-rows">
+                        <div className="bk-z-stat-card">
+                            <div className="bk-z-stat-icon">💰</div>
+                            <div className="bk-z-stat-label">Wallet</div>
+                            <div className="bk-z-stat-value">₹{profile.wallet || 0}</div>
+                        </div>
+                        <div className="bk-z-stat-card">
+                            <div className="bk-z-stat-icon">🎟️</div>
+                            <div className="bk-z-stat-label">Coupons</div>
+                        </div>
+                    </div>
+
+                    <div className="bk-z-section">
+                        <div className="bk-z-section-title">Your preferences</div>
+                        <div className="bk-z-list">
+                            <div className="bk-z-list-item">
+                                <span className="bk-z-list-icon">🥦</span>
+                                <span className="bk-z-list-text">Veg Mode</span>
+                                <span className="bk-z-list-suffix">Off</span>
+                            </div>
+                            <div className="bk-z-list-item" onClick={toggleTheme}>
+                                <span className="bk-z-list-icon">{theme === 'light' ? '☀️' : '🌙'}</span>
+                                <span className="bk-z-list-text">Appearance</span>
+                                <span className="bk-z-list-suffix" style={{ textTransform: 'capitalize' }}>{theme}</span>
+                            </div>
+                            <div className="bk-z-list-item">
+                                <span className="bk-z-list-icon">💳</span>
+                                <span className="bk-z-list-text">Payment methods</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bk-z-section">
+                        <div className="bk-z-section-title">Account details</div>
+                        <div className="bk-z-list">
+                            <div className="bk-z-list-item" onClick={() => navigate('/my-orders')}>
+                                <span className="bk-z-list-icon">📦</span>
+                                <span className="bk-z-list-text">Your orders</span>
+                            </div>
+                            <div className="bk-z-list-item">
+                                <span className="bk-z-list-icon">🏠</span>
+                                <span className="bk-z-list-text">Address book</span>
+                            </div>
+                            <div className="bk-z-list-item" onClick={logout} style={{ borderBottom: 'none' }}>
+                                <span className="bk-z-list-icon">🚪</span>
+                                <span className="bk-z-list-text" style={{ color: 'var(--z-red)', fontWeight: 700 }}>Sign out</span>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     );
 };

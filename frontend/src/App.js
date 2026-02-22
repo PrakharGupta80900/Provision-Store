@@ -12,6 +12,8 @@ import Signup from './pages/Signup';
 import Profile from './pages/Profile';
 import MyOrders from './pages/MyOrders';
 import AuthContext, { AuthProvider } from './AuthContext';
+import { ThemeProvider } from './ThemeContext';
+import homeImg from './home.jpg';
 
 /* ================================================================
    CONSTANTS
@@ -599,27 +601,75 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
 /* ================================================================
    APP ROOT
 ================================================================ */
-const App = () => (
-  <Router>
-    <AuthProvider>
-      <CartProvider>
-        <div className="App">
-          <Navigation />
-          <Routes>
-            <Route path="/" element={<Navigate to="/shop" />} />
-            <Route path="/shop" element={<ProductList />} />
-            <Route path="/cart" element={<NonAdminRoute><Cart /></NonAdminRoute>} />
-            <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
-            <Route path="/my-orders" element={<ProtectedRoute><MyOrders /></ProtectedRoute>} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="/admin" element={<ProtectedRoute adminOnly={true}><Admin /></ProtectedRoute>} />
-          </Routes>
-        </div>
-      </CartProvider>
-    </AuthProvider>
-  </Router>
-);
+
+/* ================================================================
+   SPLASH SCREEN
+   ================================================================ */
+const SplashScreen = ({ show }) => {
+  const [active, setActive] = useState(false);
+  useEffect(() => {
+    // Small delay to trigger the scale-in transition
+    const t = setTimeout(() => setActive(true), 50);
+    return () => clearTimeout(t);
+  }, []);
+
+  return (
+    <div className={`bk-splash-container ${show ? '' : 'fade-out'} ${active ? 'active' : ''}`}>
+      <img src={homeImg} alt="Splash" className="bk-splash-image" />
+      <div className="bk-splash-logo-overlay">
+        <div className="bk-splash-logo-text">Gupta Kirana Store</div>
+        <p style={{ margin: 0, opacity: 0.9, fontWeight: 600 }}>Freshness delivered instantly</p>
+      </div>
+    </div>
+  );
+};
+
+/* ================================================================
+   APP ROOT
+   ================================================================ */
+const App = () => {
+  const [showSplash, setShowSplash] = useState(true);
+  const [renderMain, setRenderMain] = useState(false);
+
+  useEffect(() => {
+    // Phase 1: Show splash for 2s
+    const splashTimer = setTimeout(() => {
+      setShowSplash(false);
+      // Phase 2: Start rendering main content so it can fade in while splash fades out
+      setRenderMain(true);
+    }, 2500);
+
+    return () => clearTimeout(splashTimer);
+  }, []);
+
+  return (
+    <Router>
+      <ThemeProvider>
+        <AuthProvider>
+          <CartProvider>
+            <div className="App">
+              {showSplash && <SplashScreen show={showSplash} />}
+
+              <div className={renderMain ? "bk-main-content-fade" : "hidden-content"} style={{ opacity: renderMain ? 1 : 0 }}>
+                <Navigation />
+                <Routes>
+                  <Route path="/" element={<Navigate to="/shop" />} />
+                  <Route path="/shop" element={<ProductList />} />
+                  <Route path="/cart" element={<NonAdminRoute><Cart /></NonAdminRoute>} />
+                  <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+                  <Route path="/my-orders" element={<ProtectedRoute><MyOrders /></ProtectedRoute>} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<Signup />} />
+                  <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                  <Route path="/admin" element={<ProtectedRoute adminOnly={true}><Admin /></ProtectedRoute>} />
+                </Routes>
+              </div>
+            </div>
+          </CartProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </Router>
+  );
+};
 
 export default App;

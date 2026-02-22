@@ -19,6 +19,7 @@ const Admin = () => {
         unitQuantity: '',
         imageUrl: ''
     });
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         loadData();
@@ -125,27 +126,28 @@ const Admin = () => {
 
     /* ── Order pipeline helpers ── */
     const STATUS_META = {
-        pending: { label: 'Pending', badge: 'bg-warning text-dark', next: 'accepted', nextLabel: 'Accept' },
-        accepted: { label: 'Accepted', badge: 'bg-info text-dark', next: 'dispatched', nextLabel: 'Dispatch' },
-        dispatched: { label: 'Dispatched', badge: 'bg-primary', next: 'delivered', nextLabel: 'Deliver' },
-        delivered: { label: 'Delivered', badge: 'bg-success', next: null, nextLabel: null },
-        cancelled: { label: 'Cancelled', badge: 'bg-danger', next: null, nextLabel: null },
+        pending: { label: 'Pending', badge: 'border border-dark text-dark', next: 'accepted', nextLabel: 'Accept' },
+        accepted: { label: 'Accepted', badge: 'border border-dark text-dark', next: 'dispatched', nextLabel: 'Dispatch' },
+        dispatched: { label: 'Dispatched', badge: 'border border-dark text-dark', next: 'delivered', nextLabel: 'Deliver' },
+        delivered: { label: 'Delivered', badge: 'text-dark', next: null, nextLabel: null },
+        cancelled: { label: 'Cancelled', badge: 'text-muted', next: null, nextLabel: null },
     };
     const [orderFilter, setOrderFilter] = useState('all');
 
     // Helper: which orders belong to each tab (admin never sees cancelled)
     const filterOrders = (orders, f) => {
-        const nonCancelled = orders.filter(o => o.status !== 'cancelled' && o.status !== 'delivered');
-        if (f === 'all') return nonCancelled;
-        if (f === 'active') return nonCancelled.filter(o => o.status === 'pending' || o.status === 'accepted');
-        if (f === 'dispatched') return nonCancelled.filter(o => o.status === 'dispatched');
-        return orders.filter(o => o.status === f); // delivered tab
+        const actionable = orders.filter(o => o.status !== 'cancelled' && o.status !== 'delivered');
+        if (f === 'all') return actionable;
+        if (f === 'active') return actionable.filter(o => o.status === 'pending' || o.status === 'accepted');
+        if (f === 'dispatched') return actionable.filter(o => o.status === 'dispatched');
+        if (f === 'delivered') return orders.filter(o => o.status === 'delivered');
+        return orders.filter(o => o.status === f);
     };
 
     return (
         <div className="admin-panel mt-4 container">
             <div className="admin-header d-flex justify-content-between align-items-center mb-4">
-                <h2 className="text-white">Admin Dashboard</h2>
+                <h2 className="text-black">Admin Dashboard</h2>
                 <div className="btn-group">
                     <button onClick={() => setView('dashboard')} className={`btn ${view === 'dashboard' ? 'btn-primary' : 'btn-outline-primary'}`}>Dashboard</button>
                     <button onClick={() => setView('products')} className={`btn ${view === 'products' ? 'btn-primary' : 'btn-outline-primary'}`}>Products</button>
@@ -288,7 +290,7 @@ const Admin = () => {
                                             </div>
                                         )}
                                     </div>
-                                    <small className="text-muted mt-1 d-block" style={{ fontSize: '10px' }}>
+                                    <small className="text-white-50 mt-2 d-block" style={{ fontSize: '11px', fontWeight: '500' }}>
                                         Or enter manual URL:
                                         <input
                                             type="text"
@@ -314,6 +316,21 @@ const Admin = () => {
                         </div>
                     </div>
 
+                    <div className="d-flex justify-content-between align-items-center mb-4 mt-5">
+                        <h3 className="text-black mb-0">Product List</h3>
+                        <div className="search-wrapper" style={{ maxWidth: '300px', width: '100%' }}>
+                            <div className="input-group">
+                                <span className="input-group-text bg-dark border-secondary text-white-50">🔍</span>
+                                <input
+                                    type="text"
+                                    className="form-control bg-dark text-white border-secondary"
+                                    placeholder="Search products..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+                        </div>
+                    </div>
                     <div className="table-responsive">
                         <table className="table table-hover table-dark bg-transparent">
                             <thead>
@@ -326,18 +343,23 @@ const Admin = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {products.map(p => (
-                                    <tr key={p._id}>
-                                        <td>{p.name}</td>
-                                        <td>₹{p.price} {p.unitQuantity ? `(${p.unitQuantity})` : (p.unit ? `/${p.unit}` : '')}</td>
-                                        <td>{p.mrp ? <span>₹{p.mrp} <span style={{ fontSize: '11px', color: '#4caf50' }}>({Math.round(((p.mrp - p.price) / p.mrp) * 100)}% off)</span></span> : <span style={{ color: '#888' }}>—</span>}</td>
-                                        <td>{p.stock}</td>
-                                        <td>
-                                            <button className="btn btn-sm btn-outline-info me-2" onClick={() => handleEdit(p)}>Edit</button>
-                                            <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(p._id)}>Delete</button>
-                                        </td>
-                                    </tr>
-                                ))}
+                                {products
+                                    .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                                    .map(p => (
+                                        <tr key={p._id}>
+                                            <td>{p.name}</td>
+                                            <td>₹{p.price} {p.unitQuantity ? `(${p.unitQuantity})` : (p.unit ? `/${p.unit}` : '')}</td>
+                                            <td>{p.mrp ? <span>₹{p.mrp} <span style={{ fontSize: '11px', color: '#4caf50' }}>({Math.round(((p.mrp - p.price) / p.mrp) * 100)}% off)</span></span> : <span style={{ color: '#888' }}>—</span>}</td>
+                                            <td>{p.stock}</td>
+                                            <td>
+                                                <button className="btn btn-sm btn-outline-info me-2" onClick={() => handleEdit(p)}>Edit</button>
+                                                <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(p._id)}>Delete</button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                {products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
+                                    <tr><td colSpan="5" className="text-center py-5 text-white-50">No products found matching "{searchTerm}"</td></tr>
+                                )}
                             </tbody>
                         </table>
                     </div>
@@ -345,8 +367,8 @@ const Admin = () => {
             ) : view === 'orders' ? (
                 <div className="admin-orders">
                     <div className="d-flex justify-content-between align-items-center mb-3">
-                        <h3 className="text-white mb-0">Orders</h3>
-                        <button className="btn btn-sm btn-outline-light" onClick={loadData}>↻ Refresh</button>
+                        <h3 className="text-dark mb-0">Orders</h3>
+                        <button className="btn btn-sm btn-outline-dark" onClick={loadData}>↻ Refresh</button>
                     </div>
 
                     {/* Pipeline tabs */}
@@ -372,12 +394,13 @@ const Admin = () => {
                     </div>
 
                     <div className="table-responsive">
-                        <table className="table table-hover table-dark bg-transparent">
-                            <thead>
+                        <table className="table table-bordered table-hover bg-white text-dark">
+                            <thead className="table-light">
                                 <tr>
                                     <th>Order ID</th>
                                     <th>Customer</th>
                                     <th>Phone</th>
+                                    <th>Slot</th>
                                     <th>Items</th>
                                     <th>Total</th>
                                     <th>Status</th>
@@ -390,12 +413,17 @@ const Admin = () => {
                                         const meta = STATUS_META[o.status] || STATUS_META['pending'];
                                         return (
                                             <tr key={o._id}>
-                                                <td><strong className="text-warning">{o.orderId || o._id.slice(-6)}</strong></td>
+                                                <td><strong className="text-dark">{o.orderId || o._id.slice(-6)}</strong></td>
                                                 <td>
                                                     <strong>{o.customerName || o.name || '—'}</strong><br />
-                                                    <small className="text-muted">{o.address}</small>
+                                                    <small className="text-muted" style={{ opacity: 0.85 }}>{o.address}</small>
                                                 </td>
                                                 <td>{o.phone || '—'}</td>
+                                                <td>
+                                                    <span className="badge border border-dark text-dark">
+                                                        {o.deliverySlot ? o.deliverySlot.replace('_', ' ') : 'today'}
+                                                    </span>
+                                                </td>
                                                 <td>
                                                     <ul className="list-unstyled mb-0">
                                                         {o.items?.map((i, idx) => (
@@ -411,7 +439,7 @@ const Admin = () => {
                                                     <div className="d-flex gap-1 flex-wrap">
                                                         {meta.next && (
                                                             <button
-                                                                className="btn btn-sm btn-success"
+                                                                className="btn btn-sm btn-dark"
                                                                 onClick={() => handleStatusUpdate(o._id, meta.next)}
                                                             >
                                                                 {meta.nextLabel}
@@ -419,18 +447,18 @@ const Admin = () => {
                                                         )}
                                                         {o.status === 'pending' && (
                                                             <button
-                                                                className="btn btn-sm btn-outline-danger"
+                                                                className="btn btn-sm btn-outline-dark"
                                                                 onClick={() => handleStatusUpdate(o._id, 'cancelled')}
                                                             >
                                                                 Reject
                                                             </button>
                                                         )}
                                                         {o.status === 'delivered' && (
-                                                            <span className="text-success small">Delivered</span>
+                                                            <span className="text-dark small">Delivered</span>
                                                         )}
                                                         {o.billHtml && (
                                                             <button
-                                                                className="btn btn-sm btn-outline-info"
+                                                                className="btn btn-sm btn-outline-dark"
                                                                 onClick={() => {
                                                                     const win = window.open("", "_blank");
                                                                     win.document.write(o.billHtml);
@@ -447,7 +475,7 @@ const Admin = () => {
                                         );
                                     })}
                                 {orders.filter(o => orderFilter === 'all' ? true : o.status === orderFilter).length === 0 && (
-                                    <tr><td colSpan="7" className="text-center text-muted py-4">No {orderFilter} orders.</td></tr>
+                                    <tr><td colSpan="8" className="text-center text-muted py-5">No {orderFilter} orders.</td></tr>
                                 )}
                             </tbody>
                         </table>

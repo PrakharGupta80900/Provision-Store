@@ -29,7 +29,9 @@ export const fetchProducts = async () => {
 
 export const placeOrder = async (orderData) => {
     try {
-        const response = await axios.post(`${API_URL}/orders`, orderData);
+        const token = localStorage.getItem('token');
+        const config = { headers: { 'x-auth-token': token } };
+        const response = await axios.post(`${API_URL}/orders`, orderData, config);
         return response.data;
     } catch (error) {
         console.error("Error placing order:", error);
@@ -39,7 +41,9 @@ export const placeOrder = async (orderData) => {
 
 export const fetchOrders = async () => {
     try {
-        const response = await axios.get(`${API_URL}/orders`);
+        const token = localStorage.getItem('token');
+        const config = { headers: { 'x-auth-token': token } };
+        const response = await axios.get(`${API_URL}/orders`, config);
         return response.data;
     } catch (error) {
         console.error("Error fetching orders:", error);
@@ -49,7 +53,9 @@ export const fetchOrders = async () => {
 
 export const fetchMyOrders = async () => {
     try {
-        const response = await axios.get(`${API_URL}/orders/myorders`);
+        const token = localStorage.getItem('token');
+        const config = { headers: { 'x-auth-token': token } };
+        const response = await axios.get(`${API_URL}/orders/myorders`, config);
         return response.data;
     } catch (error) {
         console.error("Error fetching my orders:", error);
@@ -83,7 +89,9 @@ export const updateProduct = async (id, productData) => {
 
 export const deleteProduct = async (id) => {
     try {
-        await axios.delete(`${API_URL}/products/${id}`);
+        const token = localStorage.getItem('token');
+        const config = { headers: { 'x-auth-token': token } };
+        await axios.delete(`${API_URL}/products/${id}`, config);
         return true;
     } catch (error) {
         console.error("Error deleting product:", error);
@@ -93,7 +101,9 @@ export const deleteProduct = async (id) => {
 
 export const fetchUserProfile = async () => {
     try {
-        const response = await axios.get(`${API_URL}/auth/profile`);
+        const token = localStorage.getItem('token');
+        const config = { headers: { 'x-auth-token': token } };
+        const response = await axios.get(`${API_URL}/auth/profile`, config);
         return response.data;
     } catch (error) {
         console.error("Error fetching profile:", error);
@@ -103,7 +113,9 @@ export const fetchUserProfile = async () => {
 
 export const updateUserProfile = async (userData) => {
     try {
-        const response = await axios.put(`${API_URL}/auth/profile`, userData);
+        const token = localStorage.getItem('token');
+        const config = { headers: { 'x-auth-token': token } };
+        const response = await axios.put(`${API_URL}/auth/profile`, userData, config);
         return response.data;
     } catch (error) {
         console.error("Error updating profile:", error);
