@@ -3,27 +3,16 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const auth = require("../middleware/auth");
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 
 /* ================================================================
    EMAIL CONFIG CHECK
 ================================================================ */
-const EMAIL_USER = process.env.EMAIL_USER;
-const EMAIL_PASS = process.env.EMAIL_PASS;
-const emailConfigured =
-    EMAIL_USER &&
-    EMAIL_PASS &&
-    !EMAIL_USER.includes("your_") &&
-    !EMAIL_PASS.includes("your_");
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const EMAIL_FROM = process.env.EMAIL_USER || "onboarding@resend.dev";
+const emailConfigured = RESEND_API_KEY && !RESEND_API_KEY.includes("your_");
 
-const transporter = emailConfigured
-    ? nodemailer.createTransport({
-        host: "smtp.gmail.com",
-        port: 587,
-        secure: false, // use STARTTLS
-        auth: { user: EMAIL_USER, pass: EMAIL_PASS },
-    })
-    : null;
+const resend = emailConfigured ? new Resend(RESEND_API_KEY) : null;
 
 /* ================================================================
    IN-MEMORY OTP STORE
@@ -53,9 +42,9 @@ router.post("/send-otp", async (req, res) => {
 
         if (emailConfigured) {
             try {
-                // Send real email
-                await transporter.sendMail({
-                    from: `"Gupta Kirana Store" <${EMAIL_USER}>`,
+                // Send real email via Resend
+                await resend.emails.send({
+                    from: `Gupta Kirana Store <${EMAIL_FROM}>`,
                     to: email,
                     subject: "Your OTP for Gupta Kirana Store Account Verification",
                     html: `
