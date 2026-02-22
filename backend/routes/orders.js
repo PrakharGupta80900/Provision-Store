@@ -19,7 +19,7 @@ const resend = emailConfigured ? new Resend(RESEND_API_KEY) : null;
 async function sendMail(to, subject, html) {
     if (emailConfigured) {
         try {
-            await resend.emails.send({ from: `Gupta Kirana Store <${EMAIL_FROM}>`, to, subject, html });
+            await resend.emails.send({ from: "Gupta Kirana Store <onboarding@resend.dev>", to, subject, html });
         } catch (err) {
             console.error("Resend Error (Non-blocking):", err.message);
         }

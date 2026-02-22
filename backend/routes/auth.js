@@ -43,8 +43,8 @@ router.post("/send-otp", async (req, res) => {
         if (emailConfigured) {
             try {
                 // Send real email via Resend
-                await resend.emails.send({
-                    from: `Gupta Kirana Store <${EMAIL_FROM}>`,
+                const result = await resend.emails.send({
+                    from: "Gupta Kirana Store <onboarding@resend.dev>",
                     to: email,
                     subject: "Your OTP for Gupta Kirana Store Account Verification",
                     html: `
@@ -64,9 +64,13 @@ router.post("/send-otp", async (req, res) => {
                         </div>
                     `,
                 });
-                return res.json({ msg: "OTP sent to your email" });
+                if (result.error) {
+                    console.error("Resend API error:", JSON.stringify(result.error));
+                } else {
+                    return res.json({ msg: "OTP sent to your email" });
+                }
             } catch (mailErr) {
-                console.error("Mail service error:", mailErr.message);
+                console.error("Mail service error:", mailErr?.message || JSON.stringify(mailErr));
                 // Fallback to console log in case of auth failure so user isn't blocked
             }
         }
