@@ -3,25 +3,36 @@ const Order = require("../models/Order");
 const User = require("../models/User");
 const Counter = require("../models/Counter");
 const auth = require("../middleware/auth");
-const { Resend } = require("resend");
+const nodemailer = require("nodemailer");
 
 /* ================================================================
    EMAIL CONFIG
 ================================================================ */
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const EMAIL_FROM = process.env.EMAIL_USER || "onboarding@resend.dev";
+const EMAIL_USER = process.env.EMAIL_USER;
+const EMAIL_PASS = process.env.EMAIL_PASS;
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 
-const emailConfigured = RESEND_API_KEY && !RESEND_API_KEY.includes("your_");
-const resend = emailConfigured ? new Resend(RESEND_API_KEY) : null;
+const emailConfigured =
+    EMAIL_USER && EMAIL_PASS &&
+    !EMAIL_USER.includes("your_") &&
+    !EMAIL_PASS.includes("your_");
+
+const transporter = emailConfigured
+    ? nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        port: 587,
+        secure: false,
+        auth: { user: EMAIL_USER, pass: EMAIL_PASS },
+    })
+    : null;
 
 /* ── Send email helper ── */
 async function sendMail(to, subject, html) {
     if (emailConfigured) {
         try {
-            await resend.emails.send({ from: "Gupta Kirana Store <onboarding@resend.dev>", to, subject, html });
+            await transporter.sendMail({ from: `"Gupta Kirana Store" <${EMAIL_USER}>`, to, subject, html });
         } catch (err) {
-            console.error("Resend Error (Non-blocking):", err.message);
+            console.error("Nodemailer Error (Non-blocking):", err.message);
         }
     }
 }

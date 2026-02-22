@@ -3,16 +3,26 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const auth = require("../middleware/auth");
-const { Resend } = require("resend");
+const nodemailer = require("nodemailer");
 
 /* ================================================================
    EMAIL CONFIG CHECK
 ================================================================ */
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const EMAIL_FROM = process.env.EMAIL_USER || "onboarding@resend.dev";
-const emailConfigured = RESEND_API_KEY && !RESEND_API_KEY.includes("your_");
+const EMAIL_USER = process.env.EMAIL_USER;
+const EMAIL_PASS = process.env.EMAIL_PASS;
+const emailConfigured =
+    EMAIL_USER && EMAIL_PASS &&
+    !EMAIL_USER.includes("your_") &&
+    !EMAIL_PASS.includes("your_");
 
-const resend = emailConfigured ? new Resend(RESEND_API_KEY) : null;
+const transporter = emailConfigured
+    ? nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        port: 587,
+        secure: false,
+        auth: { user: EMAIL_USER, pass: EMAIL_PASS },
+    })
+    : null;
 
 /* ================================================================
    IN-MEMORY OTP STORE
@@ -42,9 +52,9 @@ router.post("/send-otp", async (req, res) => {
 
         if (emailConfigured) {
             try {
-                // Send real email via Resend
-                const result = await resend.emails.send({
-                    from: "Gupta Kirana Store <onboarding@resend.dev>",
+                // Send real email via nodemailer
+                await transporter.sendMail({
+                    from: `"Gupta Kirana Store" <${EMAIL_USER}>`,
                     to: email,
                     subject: "Your OTP for Gupta Kirana Store Account Verification",
                     html: `
@@ -64,13 +74,9 @@ router.post("/send-otp", async (req, res) => {
                         </div>
                     `,
                 });
-                if (result.error) {
-                    console.error("Resend API error:", JSON.stringify(result.error));
-                } else {
-                    return res.json({ msg: "OTP sent to your email" });
-                }
+                return res.json({ msg: "OTP sent to your email" });
             } catch (mailErr) {
-                console.error("Mail service error:", mailErr?.message || JSON.stringify(mailErr));
+                console.error("Mail service error:", mailErr.message);
                 // Fallback to console log in case of auth failure so user isn't blocked
             }
         }
