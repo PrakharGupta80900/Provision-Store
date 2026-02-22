@@ -26,4 +26,5 @@ yarn-error.log*
 Thumbs.db
 
 # Project Specific
-backend/uploads/
+backend/uploads/*
+!backend/uploads/.gitkeep
