@@ -4,9 +4,6 @@ const cors = require("cors");
 const path = require("path");
 require("dotenv").config();
 
-// Force IPv4 DNS — prevents SMTP IPv6 connection issues on Render
-require("dns").setDefaultResultOrder("ipv4first");
-
 const app = express();
 const allowedOrigin = process.env.FRONTEND_URL || '*';
 app.use(cors({ origin: allowedOrigin, credentials: true }));

@@ -3,26 +3,7 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const auth = require("../middleware/auth");
-const nodemailer = require("nodemailer");
-
-/* ================================================================
-   EMAIL CONFIG CHECK
-================================================================ */
-const EMAIL_USER = process.env.EMAIL_USER;
-const EMAIL_PASS = process.env.EMAIL_PASS;
-const emailConfigured =
-    EMAIL_USER && EMAIL_PASS &&
-    !EMAIL_USER.includes("your_") &&
-    !EMAIL_PASS.includes("your_");
-
-const transporter = emailConfigured
-    ? nodemailer.createTransport({
-        host: "smtp.gmail.com",
-        port: 587,
-        secure: false,
-        auth: { user: EMAIL_USER, pass: EMAIL_PASS },
-    })
-    : null;
+const { sendMail, emailConfigured } = require("../utils/emailService");
 
 /* ================================================================
    IN-MEMORY OTP STORE
@@ -52,12 +33,7 @@ router.post("/send-otp", async (req, res) => {
 
         if (emailConfigured) {
             try {
-                // Send real email via nodemailer
-                await transporter.sendMail({
-                    from: `"Gupta Kirana Store" <${EMAIL_USER}>`,
-                    to: email,
-                    subject: "Your OTP for Gupta Kirana Store Account Verification",
-                    html: `
+                const html = `
                         <div style="font-family:Inter,Arial,sans-serif;max-width:480px;margin:auto;border:1px solid #e0e0e0;border-radius:12px;overflow:hidden;">
                             <div style="background:#0c831f;padding:24px;text-align:center;">
                                 <h1 style="color:#fff;margin:0;font-size:24px;">⚡ Gupta Kirana Store</h1>
@@ -71,10 +47,13 @@ router.post("/send-otp", async (req, res) => {
                                 </div>
                                 <p style="color:#999;font-size:12px;">If you didn't request this, please ignore this email.</p>
                             </div>
-                        </div>
-                    `,
-                });
-                return res.json({ msg: "OTP sent to your email" });
+                        </div>`;
+                const sent = await sendMail(
+                    email,
+                    "Your OTP for Gupta Kirana Store Account Verification",
+                    html
+                );
+                if (sent) return res.json({ msg: "OTP sent to your email" });
             } catch (mailErr) {
                 console.error("Mail service error:", mailErr.message);
                 // Fallback to console log in case of auth failure so user isn't blocked

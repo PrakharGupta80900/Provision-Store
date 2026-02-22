@@ -3,39 +3,12 @@ const Order = require("../models/Order");
 const User = require("../models/User");
 const Counter = require("../models/Counter");
 const auth = require("../middleware/auth");
-const nodemailer = require("nodemailer");
+const { sendMail, emailConfigured } = require("../utils/emailService");
 
 /* ================================================================
    EMAIL CONFIG
 ================================================================ */
-const EMAIL_USER = process.env.EMAIL_USER;
-const EMAIL_PASS = process.env.EMAIL_PASS;
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
-
-const emailConfigured =
-    EMAIL_USER && EMAIL_PASS &&
-    !EMAIL_USER.includes("your_") &&
-    !EMAIL_PASS.includes("your_");
-
-const transporter = emailConfigured
-    ? nodemailer.createTransport({
-        host: "smtp.gmail.com",
-        port: 587,
-        secure: false,
-        auth: { user: EMAIL_USER, pass: EMAIL_PASS },
-    })
-    : null;
-
-/* ── Send email helper ── */
-async function sendMail(to, subject, html) {
-    if (emailConfigured) {
-        try {
-            await transporter.sendMail({ from: `"Gupta Kirana Store" <${EMAIL_USER}>`, to, subject, html });
-        } catch (err) {
-            console.error("Nodemailer Error (Non-blocking):", err.message);
-        }
-    }
-}
 
 /* ── Counter helper ── */
 async function getNextSequenceValue(sequenceName) {
