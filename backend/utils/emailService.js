@@ -2,7 +2,7 @@ const axios = require("axios");
 
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
 const EMAIL_FROM = process.env.EMAIL_USER || "noreply@example.com";
-const EMAIL_FROM_NAME = "Gupta Kirana Store";
+const EMAIL_FROM_NAME = "Gk provision Store";
 
 const emailConfigured = BREVO_API_KEY && !BREVO_API_KEY.includes("your_");
 

@@ -185,7 +185,7 @@ const Checkout = () => {
     const FinalBill = () => (
         <div className="bk-final-bill">
             <div className="bk-bill-header">
-                <div className="bk-bill-shop-name">Gupta Kirana Store</div>
+                <div className="bk-bill-shop-name">Gk provision Store</div>
                 <div className="bk-bill-invoice-label">FINAL BILL</div>
             </div>
 

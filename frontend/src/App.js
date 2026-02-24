@@ -521,7 +521,7 @@ const Navigation = () => {
       <div className="bk-header-inner">
         <Link to="/shop" className="bk-logo" style={{ textDecoration: 'none' }}>
           <div>
-            <div className="bk-logo-text">⚡ Gupta Kirana Store</div>
+            <div className="bk-logo-text">⚡ Gk provision Store</div>
             <div className="bk-logo-sub">Provision Store</div>
           </div>
         </Link>
@@ -617,7 +617,7 @@ const SplashScreen = ({ show }) => {
     <div className={`bk-splash-container ${show ? '' : 'fade-out'} ${active ? 'active' : ''}`}>
       <img src={homeImg} alt="Splash" className="bk-splash-image" />
       <div className="bk-splash-logo-overlay">
-        <div className="bk-splash-logo-text">Gupta Kirana Store</div>
+        <div className="bk-splash-logo-text">Gk provision Store</div>
         <p style={{ margin: 0, opacity: 0.9, fontWeight: 600 }}>Freshness delivered instantly</p>
       </div>
     </div>

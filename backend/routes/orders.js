@@ -63,7 +63,7 @@ function generateOrderBillHtml(order) {
             
             <div class="bill-container">
                 <div class="header">
-                    <h1 class="shop-name">Gupta Kirana Store</h1>
+                    <h1 class="shop-name">Gk provision Store</h1>
                     <p style="margin: 5px 0; color: #666; font-size: 14px;">Your Trusted Grocery Partner</p>
                 </div>
                 
@@ -119,7 +119,7 @@ function generateOrderBillHtml(order) {
                 </div>
 
                 <div class="footer">
-                    Thank you for shopping with Gupta Kirana Store!<br>
+                    Thank you for shopping with Gk provision Store!<br>
                     <small>This is a computer-generated invoice.</small>
                 </div>
             </div>
@@ -141,7 +141,7 @@ async function notifyAdmin(order) {
     const html = `
         <div style="font-family:Inter,Arial,sans-serif;max-width:560px;margin:auto;border:1px solid #e0e0e0;border-radius:12px;overflow:hidden;">
             <div style="background:#0c831f;padding:20px 24px;">
-                <h1 style="color:#fff;margin:0;font-size:20px;">⚡ Gupta Kirana Store &nbsp;<span style="background:#f8c200;color:#1a1a1a;font-size:12px;font-weight:800;padding:3px 10px;border-radius:20px;">NEW ORDER</span></h1>
+                <h1 style="color:#fff;margin:0;font-size:20px;">⚡ Gk provision Store &nbsp;<span style="background:#f8c200;color:#1a1a1a;font-size:12px;font-weight:800;padding:3px 10px;border-radius:20px;">NEW ORDER</span></h1>
             </div>
             <div style="padding:24px;">
                 <h2 style="color:#1d1d1d;margin-top:0;font-size:18px;">🛒 New Order Received!</h2>
@@ -185,7 +185,7 @@ async function notifyDelivery(order) {
     const html = `
         <div style="font-family:Inter,Arial,sans-serif;max-width:560px;margin:auto;border:1px solid #e0e0e0;border-radius:12px;overflow:hidden;">
             <div style="background:#0c831f;padding:20px 24px;text-align:center;">
-                <h1 style="color:#fff;margin:0;font-size:24px;">✅ Gupta Kirana Store</h1>
+                <h1 style="color:#fff;margin:0;font-size:24px;">✅ Gk provision Store</h1>
             </div>
             <div style="padding:24px;text-align:center;">
                 <h2 style="color:#1d1d1d;margin-top:0;">Order Delivered!</h2>
@@ -195,15 +195,15 @@ async function notifyDelivery(order) {
                     <p style="margin:5px 0;"><strong>ID:</strong> ${order.orderId}</p>
                     <p style="margin:5px 0;"><strong>Total:</strong> ₹${order.total}</p>
                 </div>
-                <p style="color:#888;font-size:14px;">Thank you for choosing Gupta Kirana Store. We look forward to serving you again!</p>
+                <p style="color:#888;font-size:14px;">Thank you for choosing Gk provision Store. We look forward to serving you again!</p>
             </div>
             <div style="background:#f4f4f4;padding:15px;text-align:center;font-size:12px;color:#999;">
-                &copy; ${new Date().getFullYear()} Gupta Kirana Store. Your neighborhood provision store.
+                &copy; ${new Date().getFullYear()} Gk provision Store. Your neighborhood provision store.
             </div>
         </div>`;
 
     if (emailConfigured) {
-        await sendMail(order.email, `✅ Order Delivered — Gupta Kirana Store (${order.orderId})`, html);
+        await sendMail(order.email, `✅ Order Delivered — Gk provision Store (${order.orderId})`, html);
     }
 }
 

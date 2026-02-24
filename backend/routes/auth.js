@@ -36,7 +36,7 @@ router.post("/send-otp", async (req, res) => {
                 const html = `
                         <div style="font-family:Inter,Arial,sans-serif;max-width:480px;margin:auto;border:1px solid #e0e0e0;border-radius:12px;overflow:hidden;">
                             <div style="background:#0c831f;padding:24px;text-align:center;">
-                                <h1 style="color:#fff;margin:0;font-size:24px;">⚡ Gupta Kirana Store</h1>
+                                <h1 style="color:#fff;margin:0;font-size:24px;">⚡ Gk provision Store</h1>
                                 <p style="color:#c8e6c9;margin:4px 0 0;font-size:14px;">Your neighbourhood provision store</p>
                             </div>
                             <div style="padding:32px;">
@@ -50,7 +50,7 @@ router.post("/send-otp", async (req, res) => {
                         </div>`;
                 const sent = await sendMail(
                     email,
-                    "Your OTP for Gupta Kirana Store Account Verification",
+                    "Your OTP for Gk provision Store Account Verification",
                     html
                 );
                 if (sent) return res.json({ msg: "OTP sent to your email" });

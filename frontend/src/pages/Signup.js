@@ -110,7 +110,7 @@ const Signup = () => {
         <div className="bk-auth-page">
             <div className="bk-auth-card">
                 <div className="bk-auth-header">
-                    <div className="bk-auth-logo">⚡ Gupta Kirana Store</div>
+                    <div className="bk-auth-logo">⚡ Gk provision Store</div>
                     <div className="bk-auth-tagline">Your neighbourhood provision store</div>
                 </div>
 
