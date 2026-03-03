@@ -25,13 +25,32 @@ const upload = multer({
     }
 });
 
-// POST /api/upload/product-image  (admin only)
-router.post("/product-image", auth, upload.single("image"), (req, res) => {
+const adminOnly = (req, res, next) => {
     if (!req.user?.isAdmin) return res.status(403).json({ msg: "Admin only" });
+    next();
+};
+
+// POST /api/upload/product-image  (admin only)
+router.post("/product-image", auth, adminOnly, (req, res, next) => {
+    upload.single("image")(req, res, (err) => {
+        if (err) return next(err);
+        return next();
+    });
+}, (req, res) => {
     if (!req.file) return res.status(400).json({ msg: "No file uploaded" });
-    // Return a public URL the frontend can store as imageUrl
-    const imageUrl = `http://localhost:5000/uploads/${req.file.filename}`;
+    const backendBaseUrl = process.env.BACKEND_PUBLIC_URL || `${req.protocol}://${req.get("host")}`;
+    const imageUrl = `${backendBaseUrl}/uploads/${req.file.filename}`;
     res.json({ imageUrl });
+});
+
+router.use((err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
+        return res.status(400).json({ msg: err.message });
+    }
+    if (err && err.message === "Only image files allowed") {
+        return res.status(400).json({ msg: err.message });
+    }
+    return next(err);
 });
 
 module.exports = router;

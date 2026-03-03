@@ -148,7 +148,7 @@ const Admin = () => {
         <div className="admin-panel mt-4 container">
             <div className="admin-header d-flex justify-content-between align-items-center mb-4">
                 <h2 className="text-black">Admin Dashboard</h2>
-                <div className="btn-group">
+                <div className="btn-group admin-view-switch">
                     <button onClick={() => setView('dashboard')} className={`btn ${view === 'dashboard' ? 'btn-primary' : 'btn-outline-primary'}`}>Dashboard</button>
                     <button onClick={() => setView('products')} className={`btn ${view === 'products' ? 'btn-primary' : 'btn-outline-primary'}`}>Products</button>
                     <button onClick={() => setView('orders')} className={`btn ${view === 'orders' ? 'btn-primary' : 'btn-outline-primary'}`}>Orders</button>
@@ -202,26 +202,28 @@ const Admin = () => {
                                 <h5 className="mb-0 text-danger">Low Stock Alerts</h5>
                             </div>
                             <div className="card-body p-0">
-                                <table className="table table-dark table-hover mb-0 bg-transparent">
-                                    <thead>
-                                        <tr>
-                                            <th>Product</th>
-                                            <th>Current Stock</th>
-                                            <th>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {lowStockProducts.map(p => (
-                                            <tr key={p._id}>
-                                                <td>{p.name}</td>
-                                                <td className="text-danger fw-bold">{p.stock}</td>
-                                                <td>
-                                                    <button className="btn btn-sm btn-outline-light" onClick={() => handleEdit(p)}>Restock</button>
-                                                </td>
+                                <div className="table-responsive">
+                                    <table className="table table-dark table-hover mb-0 bg-transparent">
+                                        <thead>
+                                            <tr>
+                                                <th>Product</th>
+                                                <th>Current Stock</th>
+                                                <th>Action</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            {lowStockProducts.map(p => (
+                                                <tr key={p._id}>
+                                                    <td>{p.name}</td>
+                                                    <td className="text-danger fw-bold">{p.stock}</td>
+                                                    <td>
+                                                        <button className="btn btn-sm btn-outline-light" onClick={() => handleEdit(p)}>Restock</button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -275,7 +277,7 @@ const Admin = () => {
                                 </div>
                                 <div className="col-md-6">
                                     <label className="form-label text-white-50 small mb-1">Product Image (Device/Camera)</label>
-                                    <div className="d-flex align-items-center gap-2">
+                                    <div className="d-flex align-items-center gap-2 admin-image-row">
                                         <div className="image-upload-wrapper" style={{ flex: 1 }}>
                                             <input
                                                 type="file"
@@ -316,7 +318,7 @@ const Admin = () => {
                         </div>
                     </div>
 
-                    <div className="d-flex justify-content-between align-items-center mb-4 mt-5">
+                    <div className="d-flex justify-content-between align-items-center mb-4 mt-5 admin-products-header">
                         <h3 className="text-black mb-0">Product List</h3>
                         <div className="search-wrapper" style={{ maxWidth: '300px', width: '100%' }}>
                             <div className="input-group">
@@ -366,7 +368,7 @@ const Admin = () => {
                 </div>
             ) : view === 'orders' ? (
                 <div className="admin-orders">
-                    <div className="d-flex justify-content-between align-items-center mb-3">
+                    <div className="d-flex justify-content-between align-items-center mb-3 admin-orders-header">
                         <h3 className="text-dark mb-0">Orders</h3>
                         <button className="btn btn-sm btn-outline-dark" onClick={loadData}>↻ Refresh</button>
                     </div>

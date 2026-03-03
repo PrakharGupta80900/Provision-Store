@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "check": "node --check server.js && node --check debug_db.js && node --check routes/auth.js && node --check routes/orders.js && node --check routes/products.js && node --check routes/upload.js && node --check middleware/auth.js && node --check models/User.js && node --check models/Product.js && node --check models/Order.js && node --check models/Counter.js && node --check utils/emailService.js"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -16,7 +17,7 @@
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^8.0.3",
-    "multer": "^2.0.2",
+    "multer": "^2.1.0",
     "nodemailer": "^8.0.1",
     "resend": "^6.9.2"
   }

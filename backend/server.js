@@ -5,8 +5,17 @@ const path = require("path");
 require("dotenv").config();
 
 const app = express();
-const allowedOrigin = process.env.FRONTEND_URL || '*';
-app.use(cors({ origin: allowedOrigin, credentials: true }));
+const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:3000")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+app.use(cors({
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+        return callback(new Error("CORS not allowed"));
+    },
+    credentials: true
+}));
 app.use(express.json());
 
 // Serve uploaded product images statically

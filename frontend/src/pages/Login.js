@@ -32,46 +32,48 @@ const Login = () => {
         <div className="bk-auth-page">
             <div className="bk-auth-card">
                 <div className="bk-auth-header">
-                    <div className="bk-auth-logo">⚡ Gk provision Store</div>
+                    <div className="bk-auth-logo">Gk provision Store</div>
                     <div className="bk-auth-tagline">Your neighbourhood provision store</div>
                 </div>
 
                 <div className="bk-auth-body">
-                    <h2>Welcome back 👋</h2>
+                    <h2>Welcome back</h2>
 
                     {error && <div className="bk-auth-error">{error}</div>}
 
-                    <div className="bk-form-field">
-                        <label className="bk-form-label">Email Address</label>
-                        <input
-                            type="email"
-                            name="email"
-                            className="bk-form-input"
-                            placeholder="you@example.com"
-                            onChange={handleChange}
-                            required
-                        />
-                    </div>
+                    <form onSubmit={handleSubmit}>
+                        <div className="bk-form-field">
+                            <label className="bk-form-label">Email Address</label>
+                            <input
+                                type="email"
+                                name="email"
+                                className="bk-form-input"
+                                placeholder="you@example.com"
+                                onChange={handleChange}
+                                required
+                            />
+                        </div>
 
-                    <div className="bk-form-field">
-                        <label className="bk-form-label">Password</label>
-                        <input
-                            type="password"
-                            name="password"
-                            className="bk-form-input"
-                            placeholder="Enter your password"
-                            onChange={handleChange}
-                            required
-                        />
-                    </div>
+                        <div className="bk-form-field">
+                            <label className="bk-form-label">Password</label>
+                            <input
+                                type="password"
+                                name="password"
+                                className="bk-form-input"
+                                placeholder="Enter your password"
+                                onChange={handleChange}
+                                required
+                            />
+                        </div>
 
-                    <button
-                        className="bk-auth-submit"
-                        onClick={handleSubmit}
-                        disabled={loading}
-                    >
-                        {loading ? 'Logging in...' : 'Login →'}
-                    </button>
+                        <button
+                            type="submit"
+                            className="bk-auth-submit"
+                            disabled={loading}
+                        >
+                            {loading ? 'Logging in...' : 'Login'}
+                        </button>
+                    </form>
                 </div>
 
                 <div className="bk-auth-footer">

@@ -2,6 +2,11 @@ const router = require("express").Router();
 const Product = require("../models/Product");
 const auth = require("../middleware/auth");
 
+const adminOnly = (req, res, next) => {
+    if (!req.user?.isAdmin) return res.status(403).json({ msg: "Admin only" });
+    next();
+};
+
 // Get all products (Public)
 router.get("/", async (req, res) => {
     try {
@@ -13,7 +18,7 @@ router.get("/", async (req, res) => {
 });
 
 // Add product (Protected)
-router.post("/", auth, async (req, res) => {
+router.post("/", auth, adminOnly, async (req, res) => {
     const product = new Product(req.body);
     try {
         const newProduct = await product.save();
@@ -24,9 +29,10 @@ router.post("/", auth, async (req, res) => {
 });
 
 // Update product (Protected)
-router.put("/:id", auth, async (req, res) => {
+router.put("/:id", auth, adminOnly, async (req, res) => {
     try {
         const updatedProduct = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!updatedProduct) return res.status(404).json({ message: "Product not found" });
         res.json(updatedProduct);
     } catch (err) {
         res.status(400).json({ message: err.message });
@@ -34,9 +40,10 @@ router.put("/:id", auth, async (req, res) => {
 });
 
 // Delete product (Protected)
-router.delete("/:id", auth, async (req, res) => {
+router.delete("/:id", auth, adminOnly, async (req, res) => {
     try {
-        await Product.findByIdAndDelete(req.params.id);
+        const deleted = await Product.findByIdAndDelete(req.params.id);
+        if (!deleted) return res.status(404).json({ message: "Product not found" });
         res.json({ message: "Product deleted" });
     } catch (err) {
         res.status(500).json({ message: err.message });

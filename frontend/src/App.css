@@ -2861,3 +2861,429 @@ textarea.bg-dark::placeholder {
   flex: 1;
   cursor: pointer;
 }
+
+/* =====================================================
+   MOBILE RESPONSIVE OVERRIDES
+   ===================================================== */
+@media (max-width: 768px) {
+  body {
+    overflow-x: hidden;
+  }
+
+  .bk-header-inner {
+    gap: 8px;
+    padding: 8px 12px;
+  }
+
+  .bk-logo-text {
+    font-size: 16px;
+  }
+
+  .bk-logo-sub {
+    display: none;
+  }
+
+  .bk-header-actions {
+    gap: 6px;
+  }
+
+  .bk-header-actions .bk-btn-icon:not(.bk-cart-btn) {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    justify-content: center;
+    font-size: 0;
+  }
+
+  .bk-cart-btn {
+    width: 38px;
+    height: 38px;
+    padding: 0 !important;
+    justify-content: center;
+    font-size: 0;
+  }
+
+  .bk-cart-btn .bk-cart-count {
+    position: absolute;
+    right: -7px;
+    top: -7px;
+    margin-left: 0;
+  }
+
+  .bk-layout {
+    padding: 12px 12px 24px;
+    gap: 12px;
+  }
+
+  .bk-banner {
+    padding: 14px;
+    margin-bottom: 14px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .bk-banner-text h2 {
+    font-size: 18px;
+  }
+
+  .bk-banner-badge {
+    font-size: 11px;
+  }
+
+  .bk-toolbar {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .bk-toolbar-left {
+    min-width: 0;
+  }
+
+  .bk-section-title {
+    font-size: 18px;
+  }
+
+  .bk-product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .bk-card-info {
+    padding: 8px 6px 10px;
+  }
+
+  .bk-filter-panel {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .bk-filter-section {
+    min-width: 0;
+  }
+
+  .bk-slots-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bk-cart-page,
+  .bk-checkout-page {
+    margin: 14px auto;
+    padding: 0 12px 24px;
+  }
+
+  .bk-cart-item-row {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .bk-cart-item-price {
+    min-width: 0;
+    margin-left: auto;
+  }
+
+  .bk-checkout-card-header {
+    padding: 14px 16px;
+  }
+
+  .bk-checkout-body {
+    padding: 14px;
+  }
+
+  .bk-final-bill {
+    padding: 4px;
+  }
+
+  .bk-bill-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .bk-bill-details-row {
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .bk-bill-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+
+  .bk-status-tracker {
+    overflow-x: auto;
+    padding: 14px 0 10px;
+    gap: 4px;
+  }
+
+  .bk-status-line {
+    min-width: 18px;
+    margin: 0 2px 16px;
+  }
+
+  .bk-order-card-header>div {
+    flex-wrap: wrap !important;
+    gap: 10px;
+  }
+
+  .bk-order-card-header {
+    padding: 12px 14px !important;
+  }
+
+  .bk-order-status-msg {
+    margin: 8px 0 0 !important;
+  }
+
+  .bk-z-header {
+    padding: 20px 14px 14px;
+  }
+
+  .bk-z-profile-card {
+    gap: 12px;
+  }
+
+  .bk-z-avatar {
+    width: 72px;
+    height: 72px;
+    font-size: 30px;
+  }
+
+  .bk-z-user-info h2 {
+    font-size: 22px;
+  }
+
+  .bk-z-membership-bar {
+    padding: 12px;
+  }
+
+  .bk-z-membership-content {
+    font-size: 13px;
+  }
+
+  .bk-z-quick-rows {
+    padding: 0 14px;
+  }
+
+  .bk-z-section,
+  .bk-z-edit-form {
+    padding: 0 14px;
+  }
+
+  .bk-z-btn-group {
+    flex-direction: column;
+  }
+
+  .bk-auth-header,
+  .bk-auth-body {
+    padding: 20px;
+  }
+
+  .bk-auth-logo {
+    font-size: 22px;
+  }
+
+  .bk-admin-navbar {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .bk-mobile-toolbar {
+    padding: 8px 10px;
+  }
+
+  .bk-filter-toggle-btn {
+    padding: 8px 10px;
+  }
+
+  .bk-product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .bk-card-name {
+    font-size: 12px;
+  }
+
+  .bk-card-price {
+    font-size: 15px;
+  }
+
+  .bk-slots-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bk-z-profile-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .bk-z-quick-rows {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =====================================================
+   DEDICATED ADMIN + USER MOBILE PASS
+   ===================================================== */
+@media (max-width: 992px) {
+  .admin-panel {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .admin-header {
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: stretch !important;
+  }
+
+  .admin-view-switch {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .admin-view-switch .btn {
+    flex: 1 1 calc(33.333% - 8px);
+    min-width: 110px;
+  }
+
+  .admin-products-header,
+  .admin-orders-header {
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: stretch !important;
+  }
+
+  .admin-products-header .search-wrapper {
+    max-width: none !important;
+  }
+
+  .admin-image-row {
+    flex-wrap: wrap;
+    align-items: flex-start !important;
+  }
+
+  .admin-panel .table-responsive table {
+    min-width: 700px;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-panel {
+    margin-top: 12px !important;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .admin-header h2 {
+    font-size: 1.35rem;
+    margin-bottom: 0;
+  }
+
+  .admin-view-switch .btn {
+    flex: 1 1 calc(50% - 8px);
+  }
+
+  .admin-orders .btn-group {
+    display: flex;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .admin-orders .btn-group .btn {
+    flex: 1 1 calc(50% - 8px);
+  }
+
+  .admin-panel .card-body {
+    padding: 0.9rem;
+  }
+
+  .admin-panel .form-control,
+  .admin-panel .form-select {
+    font-size: 16px;
+  }
+
+  .admin-panel .table th,
+  .admin-panel .table td {
+    white-space: nowrap;
+    font-size: 13px;
+    vertical-align: middle;
+  }
+
+  .bk-toast {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    text-align: center;
+  }
+
+  .bk-profile-container {
+    padding: 0 12px !important;
+  }
+
+  .bk-order-history-header {
+    margin-bottom: 18px !important;
+  }
+
+  .bk-order-history-header h2 {
+    font-size: 22px !important;
+  }
+
+  .bk-orders-list {
+    gap: 16px !important;
+  }
+
+  .bk-profile-card {
+    padding: 36px 14px !important;
+  }
+
+  .bk-status-label {
+    font-size: 9px;
+    max-width: 54px;
+  }
+
+  .bk-bill-table th,
+  .bk-bill-table td {
+    font-size: 12px;
+  }
+
+  .bk-cart-item-name {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-view-switch .btn,
+  .admin-orders .btn-group .btn {
+    flex: 1 1 100%;
+  }
+
+  .admin-panel .table-responsive table {
+    min-width: 620px;
+  }
+
+  .bk-logo-text {
+    font-size: 14px;
+  }
+
+  .bk-cart-item-img {
+    width: 48px;
+    height: 48px;
+  }
+
+  .bk-cart-item-price {
+    font-size: 13px;
+  }
+}
