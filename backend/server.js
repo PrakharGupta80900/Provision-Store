@@ -5,14 +5,25 @@ const path = require("path");
 require("dotenv").config();
 
 const app = express();
-const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:3000")
+
+const normalizeOrigin = (origin) => String(origin || "").trim().replace(/\/+$/, "");
+const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:3000,http://127.0.0.1:3000")
     .split(",")
-    .map((origin) => origin.trim())
+    .map(normalizeOrigin)
     .filter(Boolean);
+
+const isAllowedOrigin = (origin) => {
+    if (!origin) return true; // non-browser clients / curl / server-to-server
+    const normalized = normalizeOrigin(origin);
+    return allowedOrigins.includes(normalized);
+};
+
 app.use(cors({
     origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-        return callback(new Error("CORS not allowed"));
+        if (isAllowedOrigin(origin)) return callback(null, true);
+        console.warn(`[CORS] Blocked origin: ${origin}. Allowed: ${allowedOrigins.join(", ")}`);
+        // Do not throw; simply reject CORS for this request.
+        return callback(null, false);
     },
     credentials: true
 }));
