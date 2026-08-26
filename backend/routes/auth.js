@@ -4,6 +4,15 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const auth = require("../middleware/auth");
 const { sendMail, emailConfigured } = require("../utils/emailService");
+const { initializeApp, getApps } = require('firebase-admin/app');
+const { getAuth } = require('firebase-admin/auth');
+
+if (!getApps().length) {
+  initializeApp({
+    projectId: process.env.FIREBASE_PROJECT_ID || 'gk-provision'
+  });
+}
+
 
 const otpStore = new Map();
 const verifiedEmails = new Map();
@@ -249,6 +258,47 @@ router.put("/profile", auth, async (req, res) => {
     res.json(user);
   } catch (err) {
     res.status(500).send("Server Error");
+  }
+});
+
+router.post("/google", async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ msg: "No token provided" });
+
+    // Verify the Firebase ID token
+    const decodedToken = await getAuth().verifyIdToken(token);
+    const email = String(decodedToken.email || "").trim().toLowerCase();
+    const name = decodedToken.name || 'Google User';
+
+    if (!email) return res.status(400).json({ msg: "Email is required from Google" });
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // Create a new user with a random password since they used Google
+      const randomPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(randomPassword, salt);
+      
+      user = new User({ name, email, password: hashedPassword });
+      await user.save();
+    }
+
+    const jwtToken = jwt.sign(
+      { id: user._id, isAdmin: user.isAdmin },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.json({
+      token: jwtToken,
+      user: { id: user._id, name: user.name, email: user.email, isAdmin: user.isAdmin },
+      msg: "Google login successful",
+    });
+  } catch (err) {
+    console.error("Google auth error:", err.message);
+    res.status(500).json({ msg: "Google authentication failed", error: err.message });
   }
 });
 

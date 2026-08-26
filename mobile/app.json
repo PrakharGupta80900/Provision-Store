@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "Provision Store",
+    "slug": "provision-store-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "platforms": ["android", "ios", "web"],
+    "assetBundlePatterns": ["**/*"]
+  }
+}

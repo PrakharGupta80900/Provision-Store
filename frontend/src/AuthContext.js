@@ -1,6 +1,8 @@
 import React, { createContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_URL } from './api';
+import { signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider } from './firebase';
 
 const AuthContext = createContext();
 
@@ -33,6 +35,25 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const loginWithGoogle = async () => {
+        try {
+            const result = await signInWithPopup(auth, googleProvider);
+            const token = await result.user.getIdToken();
+            
+            // Send token to backend to verify and get our own JWT token
+            const res = await axios.post(`${API_URL}/auth/google`, { token });
+            localStorage.setItem('token', res.data.token);
+            localStorage.setItem('user', JSON.stringify(res.data.user));
+            setUser(res.data.user);
+            axios.defaults.headers.common['x-auth-token'] = res.data.token;
+            return { success: true, isAdmin: res.data.user.isAdmin };
+        } catch (err) {
+            console.error(err);
+            const msg = err.response?.data?.msg || err.message || "Google Login failed.";
+            return { success: false, msg };
+        }
+    };
+
     const register = async (name, email, password) => {
         try {
             const res = await axios.post(`${API_URL}/auth/register`, { name, email, password });
@@ -57,7 +78,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+        <AuthContext.Provider value={{ user, login, loginWithGoogle, register, logout, loading }}>
             {children}
         </AuthContext.Provider>
     );
