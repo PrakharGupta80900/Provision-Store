@@ -6,6 +6,16 @@ const Counter = require("../models/Counter");
 const Product = require("../models/Product");
 const auth = require("../middleware/auth");
 const { sendMail, emailConfigured } = require("../utils/emailService");
+const Razorpay = require("razorpay");
+const crypto = require("crypto");
+
+let razorpay;
+if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+    razorpay = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
+}
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 const VALID_DELIVERY_SLOTS = new Set(["within_1hr", "today", "tomorrow"]);
@@ -131,8 +141,8 @@ function generateOrderBillHtml(order) {
       <tr>
         <td style="padding:10px; border-bottom:1px solid #eee;">${name}</td>
         <td style="padding:10px; border-bottom:1px solid #eee; text-align:center;">${quantity}</td>
-        <td style="padding:10px; border-bottom:1px solid #eee; text-align:right;">?${price}</td>
-        <td style="padding:10px; border-bottom:1px solid #eee; text-align:right;">?${amount}</td>
+        <td style="padding:10px; border-bottom:1px solid #eee; text-align:right;">₹${price}</td>
+        <td style="padding:10px; border-bottom:1px solid #eee; text-align:right;">₹${amount}</td>
       </tr>`;
   }).join("");
 
@@ -201,16 +211,16 @@ function generateOrderBillHtml(order) {
           <div class="total-section">
             <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:14px;color:#666;">
               <span>Item Subtotal</span>
-              <span>?${safeSubtotal}</span>
+              <span>₹${safeSubtotal}</span>
             </div>
-            ${Number(order.tax) > 0 ? `<div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:14px;color:#666;"><span>Service/Handling Fee</span><span>?${safeTax}</span></div>` : ""}
+            ${Number(order.tax) > 0 ? `<div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:14px;color:#666;"><span>Service/Handling Fee</span><span>₹${safeTax}</span></div>` : ""}
             <div style="display:flex;justify-content:space-between;margin-bottom:10px;font-size:14px;color:#666;">
               <span>Delivery Fee (${safeSlot})</span>
-              <span>?${safeDelivery}</span>
+              <span>₹${safeDelivery}</span>
             </div>
             <div style="border-top:1px solid #eee;padding-top:10px;display:flex;justify-content:space-between;align-items:center;">
               <span style="font-weight:bold;font-size:16px;">Grand Total</span>
-              <h2 class="grand-total" style="margin:0;">?${safeTotal}</h2>
+              <h2 class="grand-total" style="margin:0;">₹${safeTotal}</h2>
             </div>
             <p style="margin:10px 0 0;font-size:11px;color:#999;text-align:right;">Prices include all applicable fees.</p>
           </div>
@@ -238,7 +248,7 @@ async function notifyAdmin(order) {
     <tr>
       <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;">${escapeHtml(i.name)}</td>
       <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:center;">${toPositiveInt(i.quantity) || 1}</td>
-      <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:right;">?${round2((i.price || 0) * (i.quantity || 0)).toFixed(2)}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:right;">₹${round2((i.price || 0) * (i.quantity || 0)).toFixed(2)}</td>
     </tr>`).join("");
 
   const html = `
@@ -257,7 +267,7 @@ async function notifyAdmin(order) {
           ${itemRows}
           <tr>
             <td colspan="2" style="padding:10px 12px;font-weight:700;">Total</td>
-            <td style="padding:10px 12px;text-align:right;font-weight:800;font-size:16px;color:#0c831f;">?${safeTotal}</td>
+            <td style="padding:10px 12px;text-align:right;font-weight:800;font-size:16px;color:#0c831f;">₹${safeTotal}</td>
           </tr>
         </table>
         <div style="background:#f8f8f8;border-radius:8px;padding:16px;">
@@ -273,7 +283,7 @@ async function notifyAdmin(order) {
       </div>
     </div>`;
 
-  await sendMail(ADMIN_EMAIL, `New Order - ?${safeTotal} from ${subjectName}`, html);
+  await sendMail(ADMIN_EMAIL, `New Order - ₹${safeTotal} from ${subjectName}`, html);
 }
 
 async function notifyDelivery(order) {
@@ -294,7 +304,7 @@ async function notifyDelivery(order) {
         <div style="background:#f9f9f9;border-radius:8px;padding:20px;margin:24px 0;text-align:left;">
           <h3 style="margin-top:0;font-size:14px;color:#999;text-transform:uppercase;">Order Details</h3>
           <p style="margin:5px 0;"><strong>ID:</strong> ${safeOrderId}</p>
-          <p style="margin:5px 0;"><strong>Total:</strong> ?${safeTotal}</p>
+          <p style="margin:5px 0;"><strong>Total:</strong> ₹${safeTotal}</p>
         </div>
       </div>
     </div>`;
@@ -383,11 +393,12 @@ router.put("/:id/status", auth, async (req, res) => {
     if (!order) return res.status(404).json({ msg: "Order not found" });
 
     const { status } = req.body;
-    const allowed = ["pending", "accepted", "dispatched", "delivered", "cancelled"];
+    const allowed = ["awaiting_payment", "pending", "accepted", "dispatched", "delivered", "cancelled"];
     if (!allowed.includes(status)) return res.status(400).json({ msg: "Invalid status" });
     if (status === order.status) return res.json(order);
 
     const allowedTransitions = {
+      awaiting_payment: new Set(["cancelled", "pending"]),
       pending: new Set(["accepted", "cancelled"]),
       accepted: new Set(["dispatched"]),
       dispatched: new Set(["delivered"]),
@@ -424,6 +435,109 @@ router.put("/:id/status", auth, async (req, res) => {
 
     res.json(order);
   } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Razorpay Integration
+router.post("/razorpay/create", auth, async (req, res) => {
+  try {
+    if (!razorpay) return res.status(500).json({ message: "Razorpay is not configured on the server" });
+
+    const customerName = String(req.body?.customerName || "").trim();
+    const email = String(req.body?.email || "").trim().toLowerCase();
+    const address = String(req.body?.address || "").trim();
+    const phone = String(req.body?.phone || "").trim();
+
+    if (!customerName || !email || !address || !phone) {
+      return res.status(400).json({ message: "Customer name, email, address and phone are required" });
+    }
+
+    const { items, subtotal } = await normalizeOrderItems(req.body?.items);
+    const { tax, deliveryCharge, total, deliverySlot } = calculateCharges(subtotal, req.body?.deliverySlot);
+
+    const now = new Date();
+    const dateStr = now.toISOString().slice(2, 10).replace(/-/g, "");
+    const sequenceKey = `orderId-${dateStr}`;
+    const sequenceNum = await getNextSequenceValue(sequenceKey);
+    const orderId = `GKS-${dateStr}-${sequenceNum.toString().padStart(3, "0")}`;
+
+    const userId = req.user?.id;
+    const normalizedUser = mongoose.Types.ObjectId.isValid(userId) ? userId : undefined;
+
+    const o = new Order({
+      items,
+      subtotal,
+      tax,
+      deliveryCharge,
+      deliverySlot,
+      total,
+      customerName,
+      email,
+      address,
+      phone,
+      user: normalizedUser,
+      status: "awaiting_payment",
+      paymentMethod: "Razorpay",
+      paymentStatus: "pending",
+      orderId,
+      date: now,
+    });
+
+    o.billHtml = generateOrderBillHtml(o);
+
+    const options = {
+      amount: Math.round(total * 100), // amount in paise
+      currency: "INR",
+      receipt: orderId,
+    };
+    
+    const razorpayOrder = await razorpay.orders.create(options);
+    o.razorpayOrderId = razorpayOrder.id;
+
+    await o.save();
+
+    res.json({ 
+      msg: "Razorpay order created", 
+      razorpayOrderId: razorpayOrder.id, 
+      mongoId: o._id,
+      amount: options.amount,
+      currency: options.currency
+    });
+  } catch (err) {
+    console.error("Razorpay Create Error:", err);
+    res.status(400).json({ message: err.message });
+  }
+});
+
+router.post("/razorpay/verify", auth, async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, mongoId } = req.body;
+
+    const sign = razorpay_order_id + "|" + razorpay_payment_id;
+    const expectedSign = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(sign.toString())
+      .digest("hex");
+
+    if (razorpay_signature === expectedSign) {
+      const order = await Order.findById(mongoId);
+      if (!order) return res.status(404).json({ message: "Order not found" });
+
+      order.status = "pending";
+      order.paymentStatus = "paid";
+      order.razorpayPaymentId = razorpay_payment_id;
+      
+      await order.save();
+      
+      notifyAdmin(order).catch((err) => console.error("Admin notification error:", err.message));
+
+      res.json({ msg: "Payment verified successfully", orderId: order.orderId });
+    } else {
+      res.status(400).json({ message: "Invalid signature sent!" });
+    }
+  } catch (err) {
+    console.error("Razorpay Verify Error:", err);
     res.status(500).json({ message: err.message });
   }
 });

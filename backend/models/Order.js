@@ -21,7 +21,11 @@ const OrderSchema = new mongoose.Schema({
     dispatchedAt: { type: Date },
     cancelledAt: { type: Date },
     orderId: { type: String },
-    billHtml: { type: String }
+    billHtml: { type: String },
+    paymentMethod: { type: String, default: 'COD' },
+    paymentStatus: { type: String, default: 'pending' },
+    razorpayOrderId: { type: String },
+    razorpayPaymentId: { type: String }
 });
 
 module.exports = mongoose.model("Order", OrderSchema);

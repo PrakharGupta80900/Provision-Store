@@ -126,6 +126,7 @@ const Admin = () => {
 
     /* ── Order pipeline helpers ── */
     const STATUS_META = {
+        awaiting_payment: { label: 'Awaiting Payment', badge: 'bg-warning text-dark border', next: 'cancelled', nextLabel: 'Cancel' },
         pending: { label: 'Pending', badge: 'border border-dark text-dark', next: 'accepted', nextLabel: 'Accept' },
         accepted: { label: 'Accepted', badge: 'border border-dark text-dark', next: 'dispatched', nextLabel: 'Dispatch' },
         dispatched: { label: 'Dispatched', badge: 'border border-dark text-dark', next: 'delivered', nextLabel: 'Deliver' },
@@ -138,7 +139,7 @@ const Admin = () => {
     const filterOrders = (orders, f) => {
         const actionable = orders.filter(o => o.status !== 'cancelled' && o.status !== 'delivered');
         if (f === 'all') return actionable;
-        if (f === 'active') return actionable.filter(o => o.status === 'pending' || o.status === 'accepted');
+        if (f === 'active') return actionable.filter(o => o.status === 'pending' || o.status === 'accepted' || o.status === 'awaiting_payment');
         if (f === 'dispatched') return actionable.filter(o => o.status === 'dispatched');
         if (f === 'delivered') return orders.filter(o => o.status === 'delivered');
         return orders.filter(o => o.status === f);

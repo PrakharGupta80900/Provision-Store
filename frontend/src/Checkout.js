@@ -1,8 +1,18 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useCart } from './CartContext';
-import { placeOrder, fetchUserProfile, updateUserProfile } from './api';
+import { placeOrder, fetchUserProfile, updateUserProfile, createRazorpayOrder, verifyRazorpayPayment } from './api';
 import { useNavigate } from 'react-router-dom';
 import AuthContext from './AuthContext';
+
+const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+        const script = document.createElement("script");
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.onload = () => resolve(true);
+        script.onerror = () => resolve(false);
+        document.body.appendChild(script);
+    });
+};
 
 const Checkout = () => {
     const { cart, total, clearCart } = useCart();
@@ -13,6 +23,7 @@ const Checkout = () => {
     const [mode, setMode] = useState('loading'); // 'loading' | 'confirm' | 'new' | 'guest' | 'bill'
     const [newAddress, setNewAddress] = useState({ name: '', email: '', address: '', phone: '' });
     const [deliverySlot, setDeliverySlot] = useState('today'); // 'within_1hr' | 'today' | 'tomorrow'
+    const [paymentMethod, setPaymentMethod] = useState('razorpay'); // 'razorpay' | 'cod'
     const [confirmedAddress, setConfirmedAddress] = useState(null);
     const [saveToProfile, setSaveToProfile] = useState(false);
     const [submitting, setSubmitting] = useState(false);
@@ -102,17 +113,75 @@ const Checkout = () => {
                 deliverySlot: deliverySlot,
                 total: finalTotal,
             };
-            const result = await placeOrder(orderData);
-            if (result && result.orderId) {
-                clearCart();
-                navigate('/shop');
-                setTimeout(() => alert(`🎉 Order placed! Order ID: ${result.orderId}. Your items are on the way.`), 100);
+
+            if (paymentMethod === 'cod') {
+                const result = await placeOrder(orderData);
+                if (result && result.orderId) {
+                    clearCart();
+                    navigate('/shop');
+                    setTimeout(() => alert(`🎉 Order placed! Order ID: ${result.orderId}. Your items are on the way.`), 100);
+                } else {
+                    setError('Failed to place order. Please try again. Make sure you are logged in.');
+                }
+                setSubmitting(false);
             } else {
-                setError('Failed to place order. Please try again. Make sure you are logged in.');
+                // Razorpay Flow
+                const res = await loadRazorpayScript();
+                if (!res) {
+                    setError("Razorpay SDK failed to load. Are you online?");
+                    setSubmitting(false);
+                    return;
+                }
+
+                const result = await createRazorpayOrder(orderData);
+                if (!result || result.error) {
+                    setError(result?.error || 'Failed to create payment order. Please try again.');
+                    setSubmitting(false);
+                    return;
+                }
+
+                const options = {
+                    key: process.env.REACT_APP_RAZORPAY_KEY_ID || "rzp_test_YourKeyIdHere",
+                    amount: result.amount,
+                    currency: result.currency,
+                    name: "Gk provision Store",
+                    description: "Grocery Order",
+                    order_id: result.razorpayOrderId,
+                    handler: async function (response) {
+                        const verifyResult = await verifyRazorpayPayment({
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_signature: response.razorpay_signature,
+                            mongoId: result.mongoId
+                        });
+
+                        if (verifyResult && verifyResult.orderId) {
+                            clearCart();
+                            navigate('/shop');
+                            setTimeout(() => alert(`🎉 Payment Successful! Order ID: ${verifyResult.orderId}.`), 100);
+                        } else {
+                            setError('Payment verification failed. Please contact support.');
+                        }
+                    },
+                    prefill: {
+                        name: confirmedAddress.customerName,
+                        email: confirmedAddress.email,
+                        contact: confirmedAddress.phone,
+                    },
+                    theme: {
+                        color: "#0c831f",
+                    },
+                };
+
+                const paymentObject = new window.Razorpay(options);
+                paymentObject.on("payment.failed", function (response) {
+                    setError("Payment Failed: " + response.error.description);
+                });
+                paymentObject.open();
+                setSubmitting(false);
             }
         } catch (err) {
             setError('Something went wrong. Please try again.');
-        } finally {
             setSubmitting(false);
         }
     };
@@ -199,7 +268,7 @@ const Checkout = () => {
                 <div className="bk-bill-detail-col" style={{ textAlign: 'right' }}>
                     <strong>Date:</strong><br />
                     {new Date().toLocaleDateString()}<br />
-                    <strong>Mode:</strong> Pay on Delivery
+                    <strong>Mode:</strong> {paymentMethod === 'cod' ? 'Cash on Delivery' : 'Online Payment'}
                 </div>
             </div>
 
@@ -244,12 +313,39 @@ const Checkout = () => {
                 Thank you for shopping with us!
             </div>
 
+            <div className="bk-payment-method-section" style={{ marginTop: '20px', padding: '15px', border: '1px solid #eee', borderRadius: '8px' }}>
+                <h4 style={{ margin: '0 0 10px 0' }}>💳 Payment Method</h4>
+                <div style={{ display: 'flex', gap: '20px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                        <input 
+                            type="radio" 
+                            name="paymentMethod" 
+                            value="razorpay" 
+                            checked={paymentMethod === 'razorpay'} 
+                            onChange={() => setPaymentMethod('razorpay')} 
+                        />
+                        Online Payment (UPI/Cards)
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                        <input 
+                            type="radio" 
+                            name="paymentMethod" 
+                            value="cod" 
+                            checked={paymentMethod === 'cod'} 
+                            onChange={() => setPaymentMethod('cod')} 
+                        />
+                        Cash on Delivery
+                    </label>
+                </div>
+            </div>
+
             <button
                 className="bk-place-order-btn"
+                style={{ marginTop: '20px' }}
                 onClick={handleFinalSubmit}
                 disabled={submitting}
             >
-                {submitting ? '⏳ Placing Order...' : `Confirm & Place Order · ₹${finalTotal.toFixed(0)}`}
+                {submitting ? '⏳ Processing...' : `Confirm & Pay · ₹${finalTotal.toFixed(0)}`}
             </button>
 
             <div className="bk-cancel-link" style={{ textAlign: 'center', marginTop: 15 }}>

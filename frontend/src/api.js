@@ -153,3 +153,27 @@ export const verifyOtp = async (email, otp) => {
     }
 };
 
+export const createRazorpayOrder = async (orderData) => {
+    try {
+        const token = localStorage.getItem('token');
+        const config = { headers: { 'x-auth-token': token } };
+        const response = await axios.post(`${API_URL}/orders/razorpay/create`, orderData, config);
+        return response.data;
+    } catch (error) {
+        console.error("Error creating Razorpay order:", error);
+        return { error: error.response?.data?.message || error.message || "Failed to create order" };
+    }
+};
+
+export const verifyRazorpayPayment = async (paymentData) => {
+    try {
+        const token = localStorage.getItem('token');
+        const config = { headers: { 'x-auth-token': token } };
+        const response = await axios.post(`${API_URL}/orders/razorpay/verify`, paymentData, config);
+        return response.data;
+    } catch (error) {
+        console.error("Error verifying Razorpay payment:", error);
+        return { error: error.response?.data?.message || error.message || "Failed to verify payment" };
+    }
+};
+
